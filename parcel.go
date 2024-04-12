@@ -14,24 +14,24 @@ func NewParcelStore(db *sql.DB) ParcelStore {
 
 func (s ParcelStore) Add(p Parcel) (int, error) {
 	// реализуйте добавление строки в таблицу parcel, используйте данные из переменной p
-
 	// верните идентификатор последней добавленной записи
-	statement, err := s.db.Prepare("INSERT INTO parcel (client, status, address, created_at) VALUES (?, ?, ?, ?)")
+
+	statement := "INSERT INTO parcel (client, status, address, created_at) VALUES (?, ?, ?, ?)"
+	result, err := s.db.Exec(statement,
+		sql.Named("client", p.Client),
+		sql.Named("status", p.Status),
+		sql.Named("address", p.Address),
+		sql.Named("created_at", p.CreatedAt),
+	)
 	if err != nil {
 		return 0, err
 	}
-	defer statement.Close()
-
-	result, err := statement.Exec(p.Client, p.Status, p.Address, p.CreatedAt)
-	if err != nil {
-		return 0, err
-	}
-
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
 
+	// верните идентификатор последней добавленной записи
 	return int(id), nil
 }
 
@@ -84,13 +84,13 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 func (s ParcelStore) SetAddress(number int, address string) error {
 	// реализуйте обновление адреса в таблице parcel
 	// менять адрес можно только если значение статуса registered
-	_, err := s.db.Exec("UPDATE parcel SET address = ? WHERE number = ? AND status = 'registered'", address, number)
+	_, err := s.db.Exec("UPDATE parcel SET address = ? WHERE number = ? AND status = ?", address, number, ParcelStatusRegistered)
 	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
 	// реализуйте удаление строки из таблицы parcel
 	// удалять строку можно только если значение статуса registered
-	_, err := s.db.Exec("DELETE FROM parcel WHERE number = ? AND status = 'registered'", number)
+	_, err := s.db.Exec("DELETE FROM parcel WHERE number = ? AND status = ?", number, ParcelStatusRegistered)
 	return err
 }

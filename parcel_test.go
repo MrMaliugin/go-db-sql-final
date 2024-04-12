@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
@@ -41,14 +42,17 @@ func TestAddGetDelete(t *testing.T) {
 	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
-	require.NotZero(t, id)
+	require.NotNil(t, id)
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	storedParcel, err := store.Get(id)
-	require.NoError(t, err)
-	require.Equal(t, parcel.Client, storedParcel.Client)
-	require.Equal(t, parcel.Address, storedParcel.Address)
+	assert.NoError(t, err)
+	assert.Equal(t, parcel.Client, storedParcel.Client)
+	assert.Equal(t, parcel.Address, storedParcel.Address)
+	assert.Equal(t, parcel.CreatedAt, storedParcel.CreatedAt)
+	assert.Equal(t, parcel.Status, storedParcel.Status)
+
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
@@ -78,8 +82,8 @@ func TestSetAddress(t *testing.T) {
 	// check
 	// получите добавленную посылку и убедитесь, что адрес обновился
 	storedParcel, err := store.Get(id)
-	require.NoError(t, err)
-	require.Equal(t, newAddress, storedParcel.Address)
+	assert.NoError(t, err)
+	assert.Equal(t, newAddress, storedParcel.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -152,9 +156,10 @@ func TestGetByClient(t *testing.T) {
 	for _, parcel := range storedParcels {
 		originalParcel, exists := parcelMap[parcel.Number] // в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		require.True(t, exists)                            // убедитесь, что все посылки из storedParcels есть в parcelMap
+
 		// убедитесь, что значения полей полученных посылок заполнены верно
-		require.Equal(t, originalParcel.Client, parcel.Client)
-		require.Equal(t, originalParcel.Address, parcel.Address)
-		require.Equal(t, originalParcel.Status, parcel.Status)
+		assert.Equal(t, originalParcel.Client, parcel.Client)
+		assert.Equal(t, originalParcel.Address, parcel.Address)
+		assert.Equal(t, originalParcel.Status, parcel.Status)
 	}
 }
