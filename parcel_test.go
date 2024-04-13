@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,30 +35,28 @@ func TestAddGetDelete(t *testing.T) {
 	db, err := sql.Open("sqlite", "tracker.db") // настройте подключение к БД
 	require.NoError(t, err)
 	defer db.Close()
+
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
 
 	// add
 	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
-	id, err := store.Add(parcel)
+	parcel.Number, err = store.Add(parcel)
 	require.NoError(t, err)
-	require.NotNil(t, id)
+	require.Positive(t, parcel.Number)
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
-	storedParcel, err := store.Get(id)
+	storedParcel, err := store.Get(parcel.Number)
 	assert.NoError(t, err)
-	assert.Equal(t, parcel.Client, storedParcel.Client)
-	assert.Equal(t, parcel.Address, storedParcel.Address)
-	assert.Equal(t, parcel.CreatedAt, storedParcel.CreatedAt)
-	assert.Equal(t, parcel.Status, storedParcel.Status)
+	assert.Equal(t, parcel, storedParcel)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
-	require.NoError(t, store.Delete(id))
+	require.NoError(t, store.Delete(parcel.Number))
 
-	_, err = store.Get(id)
+	_, err = store.Get(parcel.Number)
 	require.Error(t, err)
 }
 
@@ -150,7 +148,7 @@ func TestGetByClient(t *testing.T) {
 	// get by client
 	storedParcels, err := store.GetByClient(client) // получите список посылок по идентификатору клиента, сохранённого в переменной client
 	require.NoError(t, err)                         // убедитесь в отсутствии ошибки
-	require.Len(t, storedParcels, len(parcels))     // убедитесь, что количество полученных посылок совпадает с количеством добавленных
+	assert.ElementsMatch(t, parcels, storedParcels) // убедитесь, что количество полученных посылок совпадает с количеством добавленных
 
 	// check
 	for _, parcel := range storedParcels {
